@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Student Enrollment Form</title>
+  <script>
+    const JPDB_BASE_URL = "http://api.login2explore.com:5577";
+    const JPDB_IRL = "/api/irl";
+    const JPDB_IML = "/api/iml";
+    const DB_NAME = "Student";
+    const REL_NAME = "Student-Rel";
+    const TOKEN = "90935020|-31949211357119258|90959357";
+
+    // Utility to reset form
+    function resetForm() {
+      document.getElementById("rollNo").value = "";
+      document.getElementById("fullName").value = "";
+      document.getElementById("email").value = "";
+      document.getElementById("mobile").value = "";
+      document.getElementById("rollNo").disabled = false;
+      document.getElementById("saveBtn").disabled = true;
+      document.getElementById("updateBtn").disabled = true;
+    }
+
+    // Validate input
+    function validateForm() {
+      return (
+        document.getElementById("rollNo").value &&
+        document.getElementById("fullName").value &&
+        document.getElementById("email").value &&
+        document.getElementById("mobile").value
+      );
+    }
+
+    // GET student by ID
+    function getStudent() {
+      const rollNo = document.getElementById("rollNo").value.trim();
+      if (!rollNo) return;
+
+      const getReq = {
+        token: TOKEN,
+        cmd: "GET_BY_KEY",
+        dbName: DB_NAME,
+        rel: REL_NAME,
+        jsonStr: { id: rollNo }
+      };
+
+      fetch(JPDB_BASE_URL + JPDB_IRL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(getReq)
+      })
+        .then(res => res.json())
+        .then(obj => {
+          if (obj.data) {
+            // Record exists → enable update
+            const data = obj.data.record;
+            document.getElementById("fullName").value = data.name;
+            document.getElementById("email").value = data.email;
+            document.getElementById("mobile").value = data.mobile;
+            document.getElementById("rollNo").disabled = true;
+            document.getElementById("saveBtn").disabled = true;
+            document.getElementById("updateBtn").disabled = false;
+          } else {
+            // New record → enable save
+            document.getElementById("saveBtn").disabled = false;
+            document.getElementById("updateBtn").disabled = true;
+          }
+        });
+    }
+
+    // Save new record
+    function saveData() {
+      if (!validateForm()) {
+        alert("All fields required.");
+        return;
+      }
+
+      const putReq = {
+        token: TOKEN,
+        cmd: "PUT",
+        dbName: DB_NAME,
+        rel: REL_NAME,
+        jsonStr: {
+          id: document.getElementById("rollNo").value,
+          name: document.getElementById("fullName").value,
+          email: document.getElementById("email").value,
+          mobile: document.getElementById("mobile").value
+        }
+      };
+
+      fetch(JPDB_BASE_URL + JPDB_IML, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(putReq)
+      })
+        .then(res => res.json())
+        .then(obj => {
+          alert("Saved!");
+          resetForm();
+        });
+    }
+
+    // Update existing record
+    function updateData() {
+      if (!validateForm()) {
+        alert("All fields required.");
+        return;
+      }
+
+      const updateReq = {
+        token: TOKEN,
+        cmd: "UPDATE",
+        dbName: DB_NAME,
+        rel: REL_NAME,
+        jsonStr: {
+          id: document.getElementById("rollNo").value,
+          name: document.getElementById("fullName").value,
+          email: document.getElementById("email").value,
+          mobile: document.getElementById("mobile").value
+        }
+      };
+
+      fetch(JPDB_BASE_URL + JPDB_IML, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updateReq)
+      })
+        .then(res => res.json())
+        .then(obj => {
+          alert("Updated!");
+          resetForm();
+        });
+    }
+
+    window.onload = resetForm;
+  </script>
+</head>
+<body>
+  <h2>Student Enrollment Form</h2>
+  <form>
+    Roll No: <input type="text" id="rollNo" onblur="getStudent()"><br><br>
+    Full Name: <input type="text" id="fullName"><br><br>
+    Email: <input type="text" id="email"><br><br>
+    Mobile: <input type="text" id="mobile"><br><br>
+
+    <button type="button" id="saveBtn" onclick="saveData()">Save</button>
+    <button type="button" id="updateBtn" onclick="updateData()">Update</button>
+    <button type="button" onclick="resetForm()">Reset</button>
+  </form>
+</body>
+</html>
